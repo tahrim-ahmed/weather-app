@@ -154,6 +154,64 @@ export default function WeatherComponent() {
                                 </Text>
                             </View>
 
+                            <View className="bg-transparent mb-4">
+                                <View className="flex-row justify-center gap-2 mb-2">
+                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
+                                        <View>
+                                            <Text className="text-lg font-medium mb-2">UV Index</Text>
+                                            <Text className="text-xl font-bold">{weather.uvi || "N/A"}</Text>
+                                        </View>
+                                        <View>
+                                            <Feather name="sun" size={30} />
+                                        </View>
+                                    </View>
+
+                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
+                                        <View>
+                                            <Text className="text-lg font-medium mb-2">Feels Like</Text>
+                                            <Text className="text-xl font-bold">{weather.main.feels_like}°C</Text>
+                                        </View>
+                                        <View>
+                                            <MaterialCommunityIcons name="coolant-temperature" size={30} />
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View className="flex-row justify-center gap-2 mb-2">
+                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
+                                        <View>
+                                            <Text className="text-lg font-medium mb-2">Humidity</Text>
+                                            <Text className="text-xl font-bold">{weather.main.humidity}%</Text>
+                                        </View>
+                                        <View>
+                                            <Fontisto name="blood-drop" size={30} />
+                                        </View>
+                                    </View>
+
+                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
+                                        <View>
+                                            <Text className="text-lg font-medium mb-2">Wind Speed</Text>
+                                            <Text className="text-xl font-bold">{weather.wind.speed} m/s</Text>
+                                        </View>
+                                        <View>
+                                            <Fontisto name="wind" size={30} />
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View className="flex-row justify-center flex-wrap">
+                                    <View className="w-1/2 flex-row gap-1 justify-between bg-white rounded-lg p-4 shadow items-center">
+                                        <View>
+                                            <Text className="text-lg font-medium mb-2">Air Pressure</Text>
+                                            <Text className="text-xl font-bold">{weather.main.pressure} hPa</Text>
+                                        </View>
+                                        <View>
+                                            <Entypo name="air" size={30} />
+                                        </View>
+                                    </View>
+                                </View>
+                            </View>
+
                             <FlatList
                                 horizontal
                                 data={hourlyForecast}
