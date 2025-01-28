@@ -13,11 +13,13 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 import Country from "../library/country.json";
+import {Entypo, Feather, Fontisto, MaterialCommunityIcons} from "@expo/vector-icons";
 
 export default function WeatherComponent() {
     const [city, setCity] = useState<string>("");
     const [suggestions, setSuggestions] = useState<{ name: string; countryCode: string }[]>([]);
     const [weather, setWeather] = useState<any>(null);
+    const [hourlyForecast, setHourlyForecast] = useState<any[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     const inputRef = useRef<TextInput>(null);
@@ -42,6 +44,7 @@ export default function WeatherComponent() {
 
                     const countryFullName = Country[response.data.sys.country] || response.data.sys.country;
                     setWeather({ ...response.data, fullCountryName: countryFullName });
+                    setHourlyForecast(forecastResponse.data.list.slice(0, 12));
                     setCity(`${response.data.name}, ${countryFullName}`);
                 }
             } catch (error) {
@@ -78,8 +81,13 @@ export default function WeatherComponent() {
                 `https://api.openweathermap.org/data/2.5/weather?q=${selectedCity.name},${selectedCity.countryCode}&units=metric&appid=${API_KEY}`
             );
 
+            const forecastResponse = await axios.get(
+                `https://api.openweathermap.org/data/2.5/forecast?q=${selectedCity.name},${selectedCity.countryCode}&units=metric&appid=${API_KEY}`
+            );
+
             const countryFullName = Country[selectedCity.countryCode] || selectedCity.countryCode;
             setWeather({ ...response.data, fullCountryName: countryFullName });
+            setHourlyForecast(forecastResponse.data.list.slice(0, 12)); // First 12 hours
             setCity(`${selectedCity.name}, ${countryFullName}`);
             setSuggestions([]);
             Keyboard.dismiss();
@@ -145,6 +153,37 @@ export default function WeatherComponent() {
                                     {weather.weather[0].description}
                                 </Text>
                             </View>
+
+                            <FlatList
+                                horizontal
+                                data={hourlyForecast}
+                                keyExtractor={(_, index) => index.toString()}
+                                renderItem={({ item }) => {
+                                    const date = new Date(item.dt * 1000);
+                                    const time = date.toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        hour12: true,
+                                    });
+                                    const hour = date.getHours();
+
+                                    let emoji = "";
+                                    if (hour === 12 || hour === 0) emoji = "🕛";
+                                    else if (hour === 3 || hour === 15) emoji = "🕒";
+                                    else if (hour === 6 || hour === 18) emoji = "🕕";
+                                    else if (hour === 9 || hour === 21) emoji = "🕘";
+
+                                    return (
+                                        <View className="bg-white p-2 rounded-lg items-center mr-2 shadow w-36">
+                                            <Text className="text-lg font-sm">
+                                                {emoji} {time}
+                                            </Text>
+                                            <Text className="text-lg">🌡️ {item.main.temp}°C</Text>
+                                        </View>
+                                    );
+                                }}
+                                showsHorizontalScrollIndicator={false}
+                            />
                         </View>
                     ) : (
                         <Text className="text-center text-lg mt-4 text-white">Fetching weather data...</Text>
