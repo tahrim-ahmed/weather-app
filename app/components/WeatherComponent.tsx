@@ -1,253 +1,137 @@
-import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import {
-    Alert,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    FlatList,
-    Keyboard,
-    KeyboardAvoidingView,
-    ImageBackground,
-} from "react-native";
-import * as Location from "expo-location";
-import Country from "../library/country.json";
-import {Entypo, Feather, Fontisto, MaterialCommunityIcons} from "@expo/vector-icons";
+import React, {useState} from "react";
+import {Image, SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View} from "react-native";
+import {StatusBar} from "expo-status-bar";
+import {MagnifyingGlassIcon} from "react-native-heroicons/outline";
+import {CalendarDaysIcon, MapPinIcon} from "react-native-heroicons/solid";
 
 export default function WeatherComponent() {
-    const [city, setCity] = useState<string>("");
-    const [suggestions, setSuggestions] = useState<{ name: string; countryCode: string }[]>([]);
-    const [weather, setWeather] = useState<any>(null);
-    const [hourlyForecast, setHourlyForecast] = useState<any[]>([]);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [search, toggleSearch] = useState(false);
+    const [locationsData, setLocationsData] = useState([1,2,3]);
 
-    const inputRef = useRef<TextInput>(null);
+    const handleLocation = (location: string) => {
 
-    const API_KEY = "5f4bb45b66ce5e74105482477aff6431";
-
-    useEffect(() => {
-        const fetchDefaultWeather = async () => {
-            try {
-                const locationData = await Location.getCurrentPositionAsync({});
-
-                if (locationData) {
-                    const { latitude, longitude } = locationData.coords;
-
-                    const response = await axios.get(
-                        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}`
-                    );
-
-                    const forecastResponse = await axios.get(
-                        `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}`
-                    );
-
-                    const countryFullName = Country[response.data.sys.country] || response.data.sys.country;
-                    setWeather({ ...response.data, fullCountryName: countryFullName });
-                    setHourlyForecast(forecastResponse.data.list.slice(0, 12));
-                    setCity(`${response.data.name}, ${countryFullName}`);
-                }
-            } catch (error) {
-                Alert.alert("Error", "Failed to fetch weather data.");
-            }
-        };
-
-        fetchDefaultWeather();
-    }, [API_KEY]);
-
-    const fetchCitySuggestions = async (query: string) => {
-        if (!query.trim()) {
-            setSuggestions([]);
-            return;
-        }
-
-        try {
-            const response = await axios.get(
-                `https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${API_KEY}`
-            );
-            const cities = response.data.map((location: any) => ({
-                name: location.name,
-                countryCode: location.country,
-            }));
-            setSuggestions(cities);
-        } catch (error) {
-            Alert.alert("Error", "Failed to fetch city suggestions.");
-        }
-    };
-
-    const fetchWeatherByCity = async (selectedCity: { name: string; countryCode: string }) => {
-        try {
-            const response = await axios.get(
-                `https://api.openweathermap.org/data/2.5/weather?q=${selectedCity.name},${selectedCity.countryCode}&units=metric&appid=${API_KEY}`
-            );
-
-            const forecastResponse = await axios.get(
-                `https://api.openweathermap.org/data/2.5/forecast?q=${selectedCity.name},${selectedCity.countryCode}&units=metric&appid=${API_KEY}`
-            );
-
-            const countryFullName = Country[selectedCity.countryCode] || selectedCity.countryCode;
-            setWeather({ ...response.data, fullCountryName: countryFullName });
-            setHourlyForecast(forecastResponse.data.list.slice(0, 12)); // First 12 hours
-            setCity(`${selectedCity.name}, ${countryFullName}`);
-            setSuggestions([]);
-            Keyboard.dismiss();
-        } catch (error) {
-            Alert.alert("Error", "Failed to fetch weather data for the city.");
-        }
-    };
+    }
 
     return (
-        <KeyboardAvoidingView behavior="padding" className="flex-1">
-            <ImageBackground
-                source={{
-                    uri: "https://shako-bucket.s3.eu-central-1.amazonaws.com/invoice/dfWFlMF.png",
-                }}
-                resizeMode="cover"
-                style={{ flex: 1 }}
-                imageStyle={{ opacity: 0.8 }}
-            >
-                <View className="flex-1 p-4 bg-transparent">
-                    <View className="mb-4 relative">
-                        <TextInput
-                            ref={inputRef}
-                            value={city}
-                            onChangeText={(text) => {
-                                setCity(text);
-                                fetchCitySuggestions(text);
-                            }}
-                            placeholder="Enter city name"
-                            className="p-3 bg-white rounded-lg text-lg border border-gray-300"
-                            onSubmitEditing={Keyboard.dismiss}
-                        />
+        <View className="flex-1 relative">
+            <StatusBar style="light" />
+            <Image source={require('../../assets/images/weather/bg.png')} className="absolute h-full w-full" blurRadius={80} />
 
-                        {suggestions.length > 0 && (
-                            <View className="absolute top-14 left-0 right-0 bg-white rounded-lg border border-gray-300 max-h-52 overflow-hidden z-10">
-                                <FlatList
-                                    data={suggestions}
-                                    keyExtractor={(item, index) => index.toString()}
-                                    keyboardShouldPersistTaps="handled"
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            onPress={() => fetchWeatherByCity(item)}
-                                            className="p-3 border-b border-gray-100"
-                                        >
-                                            <Text className="text-lg">
-                                                {item.name}, {Country[item.countryCode] || item.countryCode}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    )}
-                                />
-                            </View>
-                        )}
+            <SafeAreaView className="flex flex-1">
+                <View className="mt-3 mx-4 relative z-50" style={{height: '7%'}}>
+                    <View className="flex-row justify-end items-center rounded-md" style={{backgroundColor: search ? 'rgba(255, 255, 255, 0.2)' : 'transparent'}}>
+                        {search ? (
+                            <TextInput placeholder="Search your city" placeholderTextColor={'lightgray'} className="pl-6 h-10 flex-1 text-base text-white" />
+                        ) : null}
+
+                        <TouchableOpacity className="p-3 m-1" onPress={() => toggleSearch(!search)}>
+                            <MagnifyingGlassIcon size={25} color="white" />
+                        </TouchableOpacity>
                     </View>
 
-                    {errorMsg ? (
-                        <Text className="text-red-500 text-center mt-4">{errorMsg}</Text>
-                    ) : weather ? (
-                        <View>
-                            <View className="p-5 rounded-xl items-center mb-4">
-                                <Text className="text-4xl font-bold text-white">
-                                    {weather.main.temp}°C
-                                </Text>
-                                <Text className="text-2xl capitalize text-white">
-                                    {weather.weather[0].description}
-                                </Text>
-                            </View>
+                    {locationsData.length > 0 && search ? (
+                        <View className="absolute bg-gray-300 top-16 w-full rounded-md">
+                            {locationsData.map((location, i) => {
+                                let showBorder = i+1 != locationsData.length;
+                                let borderClass = showBorder ? 'border-b-2 border-b-gray-400' : '';
 
-                            <View className="bg-transparent mb-4">
-                                <View className="flex-row justify-center gap-2 mb-2">
-                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
-                                        <View>
-                                            <Text className="text-lg font-medium mb-2">UV Index</Text>
-                                            <Text className="text-xl font-bold">{weather.uvi || "N/A"}</Text>
-                                        </View>
-                                        <View>
-                                            <Feather name="sun" size={30} />
-                                        </View>
-                                    </View>
-
-                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
-                                        <View>
-                                            <Text className="text-lg font-medium mb-2">Feels Like</Text>
-                                            <Text className="text-xl font-bold">{weather.main.feels_like}°C</Text>
-                                        </View>
-                                        <View>
-                                            <MaterialCommunityIcons name="coolant-temperature" size={30} />
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View className="flex-row justify-center gap-2 mb-2">
-                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
-                                        <View>
-                                            <Text className="text-lg font-medium mb-2">Humidity</Text>
-                                            <Text className="text-xl font-bold">{weather.main.humidity}%</Text>
-                                        </View>
-                                        <View>
-                                            <Fontisto name="blood-drop" size={30} />
-                                        </View>
-                                    </View>
-
-                                    <View className="w-1/2 bg-white rounded-lg p-4 shadow flex-row ap-1 justify-between items-center">
-                                        <View>
-                                            <Text className="text-lg font-medium mb-2">Wind Speed</Text>
-                                            <Text className="text-xl font-bold">{weather.wind.speed} m/s</Text>
-                                        </View>
-                                        <View>
-                                            <Fontisto name="wind" size={30} />
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View className="flex-row justify-center flex-wrap">
-                                    <View className="w-1/2 flex-row gap-1 justify-between bg-white rounded-lg p-4 shadow items-center">
-                                        <View>
-                                            <Text className="text-lg font-medium mb-2">Air Pressure</Text>
-                                            <Text className="text-xl font-bold">{weather.main.pressure} hPa</Text>
-                                        </View>
-                                        <View>
-                                            <Entypo name="air" size={30} />
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-
-                            <FlatList
-                                horizontal
-                                data={hourlyForecast}
-                                keyExtractor={(_, index) => index.toString()}
-                                renderItem={({ item }) => {
-                                    const date = new Date(item.dt * 1000);
-                                    const time = date.toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                        hour12: true,
-                                    });
-                                    const hour = date.getHours();
-
-                                    let emoji = "";
-                                    if (hour === 12 || hour === 0) emoji = "🕛";
-                                    else if (hour === 3 || hour === 15) emoji = "🕒";
-                                    else if (hour === 6 || hour === 18) emoji = "🕕";
-                                    else if (hour === 9 || hour === 21) emoji = "🕘";
-
-                                    return (
-                                        <View className="bg-white p-2 rounded-lg items-center mr-2 shadow w-36">
-                                            <Text className="text-lg font-sm">
-                                                {emoji} {time}
-                                            </Text>
-                                            <Text className="text-lg">🌡️ {item.main.temp}°C</Text>
-                                        </View>
-                                    );
-                                }}
-                                showsHorizontalScrollIndicator={false}
-                            />
+                                return (
+                                    <TouchableOpacity key={i} onPress={() => {handleLocation(location as any)}} className={`flex-row items-center b-0 p-3 px-4 mb-1 ${borderClass}`}>
+                                        <MapPinIcon size={20} color="gray" />
+                                        <Text className="text-black text-lg ml-2">
+                                            London, United Kingdom
+                                        </Text>
+                                    </TouchableOpacity>
+                                )
+                            })}
                         </View>
-                    ) : (
-                        <Text className="text-center text-lg mt-4 text-white">Fetching weather data...</Text>
-                    )}
+                    ) : null}
                 </View>
-            </ImageBackground>
-        </KeyboardAvoidingView>
+
+                <View className="mx-4 flex flex-1 justify-around mb-2">
+                    <Text className="text-white text-center text-2xl font-bold">
+                        London,{' '}
+                        <Text className="text-lg font-semibold text-gray-300">United Kingdom</Text>
+                    </Text>
+
+                    <View className="flex-row justify-center">
+                        <Image source={require('../../assets/images/weather/cloudy-sun.png')} className="w-52 h-52"/>
+                    </View>
+
+                    <View className="space-y-2">
+                        <Text className="text-center text-white font-bold text-6xl">23&#176;</Text>
+                        <Text className="text-center text-white tracking-widest text-xl">Partly cloudy</Text>
+                    </View>
+
+                    <View className="flex-row justify-between">
+                        <View className="space-x-2 flex-row items-center gap-1">
+                            <Image source={require('../../assets/images/weather/sunrise-icon.png')} className="h-6 w-6" />
+                            <Text className="text-white font-semibold text-base">6:30 AM</Text>
+                        </View>
+
+                        <View className="space-x-2 flex-row items-center gap-1">
+                            <Image source={require('../../assets/images/weather/drop.png')} className="h-6 w-6" />
+                            <Text className="text-white font-semibold text-base">50%</Text>
+                        </View>
+
+                        <View className="space-x-2 flex-row items-center gap-1">
+                            <Image source={require('../../assets/images/weather/wind.png')} className="h-6 w-6" />
+                            <Text className="text-white font-semibold text-base">50km</Text>
+                        </View>
+                    </View>
+
+                    <View className="space-y-3 mb-2">
+                        <View className="flex-row items-center gap-1 mb-2">
+                            <CalendarDaysIcon size={22} color="white" />
+                            <Text className="text-white font-semibold text-base">Daily forecast</Text>
+                        </View>
+
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <View className="space-y-1 mr-4 py-3 flex justify-center items-center w-24 rounded-md" style={{backgroundColor: 'rgba(255, 255, 255, 0.3)'}}>
+                                <Image source={require('../../assets/images/weather/rainstorm.png')} className="h-12 w-12" />
+                                <Text className="text-white">Monday</Text>
+                                <Text className="text-white font-semibold text-xl">15&#176;</Text>
+                            </View>
+
+                            <View className="space-y-1 mr-4 py-3 flex justify-center items-center w-24 rounded-md" style={{backgroundColor: 'rgba(255, 255, 255, 0.3)'}}>
+                                <Image source={require('../../assets/images/weather/rainstorm.png')} className="h-12 w-12" />
+                                <Text className="text-white">Monday</Text>
+                                <Text className="text-white font-semibold text-xl">15&#176;</Text>
+                            </View>
+
+                            <View className="space-y-1 mr-4 py-3 flex justify-center items-center w-24 rounded-md" style={{backgroundColor: 'rgba(255, 255, 255, 0.3)'}}>
+                                <Image source={require('../../assets/images/weather/rainstorm.png')} className="h-12 w-12" />
+                                <Text className="text-white">Monday</Text>
+                                <Text className="text-white font-semibold text-xl">15&#176;</Text>
+                            </View>
+
+                            <View className="space-y-1 mr-4 py-3 flex justify-center items-center w-24 rounded-md" style={{backgroundColor: 'rgba(255, 255, 255, 0.3)'}}>
+                                <Image source={require('../../assets/images/weather/rainstorm.png')} className="h-12 w-12" />
+                                <Text className="text-white">Monday</Text>
+                                <Text className="text-white font-semibold text-xl">15&#176;</Text>
+                            </View>
+
+                            <View className="space-y-1 mr-4 py-3 flex justify-center items-center w-24 rounded-md" style={{backgroundColor: 'rgba(255, 255, 255, 0.3)'}}>
+                                <Image source={require('../../assets/images/weather/rainstorm.png')} className="h-12 w-12" />
+                                <Text className="text-white">Monday</Text>
+                                <Text className="text-white font-semibold text-xl">15&#176;</Text>
+                            </View>
+
+                            <View className="space-y-1 mr-4 py-3 flex justify-center items-center w-24 rounded-md" style={{backgroundColor: 'rgba(255, 255, 255, 0.3)'}}>
+                                <Image source={require('../../assets/images/weather/rainstorm.png')} className="h-12 w-12" />
+                                <Text className="text-white">Monday</Text>
+                                <Text className="text-white font-semibold text-xl">15&#176;</Text>
+                            </View>
+
+                            <View className="space-y-1 mr-4 py-3 flex justify-center items-center w-24 rounded-md" style={{backgroundColor: 'rgba(255, 255, 255, 0.3)'}}>
+                                <Image source={require('../../assets/images/weather/rainstorm.png')} className="h-12 w-12" />
+                                <Text className="text-white">Monday</Text>
+                                <Text className="text-white font-semibold text-xl">15&#176;</Text>
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            </SafeAreaView>
+        </View>
     );
 }
