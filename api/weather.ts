@@ -1,12 +1,12 @@
 import axios from "axios";
-import {apiKey, weatherApiBase} from "@/utils/constants";
+import { EXPO_PUBLIC_WEATHER_BASE_URL, EXPO_PUBLIC_WEATHER_API_KEY } from '@env';
 
 const getCityEndpoint = (latitude: number, longitude: number) => {
-    return `${weatherApiBase}/search.json?key=${apiKey}&q=${latitude},${longitude}`;
+    return `${EXPO_PUBLIC_WEATHER_BASE_URL}/search.json?key=${EXPO_PUBLIC_WEATHER_API_KEY}&q=${latitude},${longitude}`;
 };
 
 const getForecastEndpoint = (cityName: string, days: number) => {
-    return `${weatherApiBase}/forecast.json?key=${apiKey}&q=${cityName}&days=${days}&aqi=no&alerts=no`
+    return `${EXPO_PUBLIC_WEATHER_BASE_URL}/forecast.json?key=${EXPO_PUBLIC_WEATHER_API_KEY}&q=${cityName}&days=${days}&aqi=no&alerts=no`
 }
 
 const callApi = async (endpoint: string) => {
